@@ -1,13 +1,13 @@
 span.spaces-feature.feature-atrium_forum,
 #features-menu li a.icon-forum span.icon {
-  background: url("forum.png") no-repeat scroll 0 0 transparent;
+  background: url("images/forum.png") no-repeat scroll 0 0 transparent;
 }
 
 span.spaces-feature.node-forum {
-  background: url("forum.png");
+  background: url("images/forum.png");
   background-position: 0px 100%;
 }
 div.fileview a.forum {
-  background: url("forum.png") no-repeat center;
+  background: url("images/forum.png") no-repeat center;
 }
 

@@ -1,0 +1,138 @@
+<?php
+
+include_once('atrium_forum.features.inc');
+
+/**
+ * Implementation of hook_init().
+ */
+function atrium_forum_init() {
+  drupal_add_css(drupal_get_path('module', 'atrium_forum') .'/atrium_forum.css');
+}
+
+function atrium_forum_page($tid = 0) {
+
+  // get tid from group context/path
+  if (!is_numeric($tid)) {
+    return MENU_NOT_FOUND;
+  }
+  elseif($tid == 0) {
+    //get the group node from group context
+    $node = og_get_group_context();
+    // get group taxonomy from nat
+    $nat = array_shift($node->nat);
+    if(isset($nat->tid)) {
+       $tid = $nat->tid;
+    }
+  }
+
+  // get forum topics
+  $forum_per_page = variable_get('forum_per_page', 25);
+  $sortby = variable_get('forum_order', 1);
+  $forums = forum_get_forums($tid);
+  $parents = taxonomy_get_parents_all($tid);
+  if ($tid && !in_array($tid, variable_get('forum_containers', array()))) {
+    $topics = forum_get_topics($tid, $sortby, $forum_per_page);
+  }
+
+  if(empty($topics)) {
+    $path = "node/add/forum" . (($tid>0) ? "/{$tid}" : '');
+    $item = menu_get_item($path);
+    if ($item && $item['access']) {
+      $type = 'forum';
+      $links = array(
+        $type => array(
+          'title' => $item['title'],
+          'href'  => $path,
+        )
+      );
+      $output  = '<div class="view-empty">';
+      $output .= t('Please add your first @type to get started.', array('@type' => node_get_types('name', $type)));
+      $output .= "<div class='buttons'>". theme('links', $links) ."</div>";
+      $output .= '</div>';
+    }
+  }
+  else {
+    $parents = taxonomy_get_parents_all($tid);
+    if ($tid && !in_array($tid, variable_get('forum_containers', array()))) {
+      $topics = forum_get_topics($tid, $sortby, $forum_per_page);
+    }
+    $output = theme('forums', $forums, $topics, $parents, $tid, $sortby, $forum_per_page);
+  }
+  return $output;
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+function atrium_forum_menu() {
+  $items = array();
+  $items['forum'] = array(
+    'title' => 'Forum',
+    'page callback' => 'atrium_forum_overview',
+    'page arguments' => array(),
+    'access callback' => 'spaces_access_feature',
+    'access arguments' => array('view', 'atrium_folders'),
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'forum',
+//    'file' => 'atrium_folders.pages.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function atrium_forum_db_rewrite_sql($query, $primary_table, $primary_field, $args) {
+//  dpm(array($query, $primary_table, $primary_field, $args), 'atrium_forum_db_rewrite_sql');
+}
+
+/**
+ * Implements hoo_menu_alter().
+ */
+function atrium_forum_menu_alter(&$items) {
+  $items['forum']['page callback'] = 'atrium_forum_page';
+//dpm($items['forum'], 'atrium_forum_menu_later');
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function atrium_forum_form_alter(&$form, $form_state, $form_id) {
+
+  // Auto-select group's forum when adding/editing a forum topic
+  if ($form_id == 'forum_node_form') {
+
+    // get the forum tid from args
+    $arg_tid = (int) array_pop(arg());
+
+    //get the group node from group context
+    $node = og_get_group_context();
+
+    // get group taxonomy from nat
+    $nat = array_shift($node->nat);
+
+    // get children terms
+    $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
+    $nat_terms = array($nat->tid => $nat);
+    if(count($nat_children)>0) {
+      foreach($nat_children as $nat_term) {
+        $nat_terms[$nat_term->tid] = $nat_term;
+      }
+    }
+    // remove taxonomy options (keep only nat term and children)
+    foreach($form['taxonomy'][$nat->vid]['#options'] as $key => $val) {
+      if( isset($val->option) && ($tid = key($val->option))) {
+        if(($tid != $nat->tid) && !array_key_exists($tid, $nat_terms)) {
+          unset($form['taxonomy'][$nat->vid]['#options'][$key]);
+        }
+      }
+    }
+
+    // set default value
+    $default_tid = array_key_exists($arg_tid, $nat_terms) ? $arg_tid : $nat->tid;
+    $form['taxonomy'][$nat->vid]['#default_value'] = array($default_tid);
+  }
+
+}
+
+

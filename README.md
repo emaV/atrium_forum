@@ -1,4 +1,4 @@
 atrium_forum
 ============
 
-Opena Atrium Forum feature
+Open Atrium Forum feature

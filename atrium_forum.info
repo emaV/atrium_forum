@@ -1,5 +1,5 @@
 name = "Atrium Forum"
-description = "Atrium Forum"
+description = "Enable forums in Open Atrium"
 core = "6.x"
 package = "Atrium"
 dependencies[] = "context"

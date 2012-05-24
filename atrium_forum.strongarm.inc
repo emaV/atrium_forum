@@ -100,42 +100,6 @@ function atrium_forum_strongarm() {
   $strongarm = new stdClass;
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'forum_nav_vocabulary';
-  $strongarm->value = '3';
-  $export['forum_nav_vocabulary'] = $strongarm;
-
-  $strongarm = new stdClass;
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'nat_config';
-  $strongarm->value = array(
-    'types' => array(
-      'blog' => array(),
-      'book' => array(),
-      'event' => array(),
-      'feed_ical' => array(),
-      'feed_ical_item' => array(),
-      'group' => array(
-        3 => '3',
-      ),
-      'profile' => array(),
-      'shoutbox' => array(),
-      'forum' => array(),
-      'casetracker_basic_case' => array(),
-      'casetracker_basic_project' => array(),
-    ),
-    'body' => array(),
-    'delete' => array(
-      'group' => 1,
-    ),
-    'related' => array(),
-    'node_links' => array(),
-  );
-  $export['nat_config'] = $strongarm;
-
-  $strongarm = new stdClass;
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'node_options_forum';
   $strongarm->value = array(
     0 => 'status',

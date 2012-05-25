@@ -17,9 +17,12 @@ function atrium_forum_enable() {
   variable_set('nat_config', $nat_config);
 
   // run NAT sync
-  // @TODO check _nat_sync_association call
+  // _nat_sync_association call drupal_write_record that needs db schema updated
+  // http://api.drupal.org/api/drupal/includes%21common.inc/function/drupal_write_record/6#comment-178
+  // @TODO check this code
   $associations = array("group|$forum_nav_vocabulary" => "group|$forum_nav_vocabulary");
   module_load_include('inc', 'nat', 'nat.admin');
+  drupal_get_schema(NULL, TRUE).
   _nat_sync_associations(array("group|$forum_nav_vocabulary" => "group|$forum_nav_vocabulary"));
 
   drupal_set_message("Atrium Forum feature enabled");

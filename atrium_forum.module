@@ -61,20 +61,214 @@ function atrium_forum_page($tid = 0) {
   return $output;
 }
 
+/*
+function atrium_forum_tree_form
+
+drupal_retrieve_form
+*/
+function atrium_forum_editor($node) {
+
+  // load node
+  // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
+  $nid = $node->nid;
+
+  // get group taxonomy from nat
+  $nat = array_shift(nat_get_terms($nid));
+
+  // get children terms
+  $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
+
+
+  module_load_include('inc', 'forum', 'forum.admin');
+
+  $form = drupal_retrieve_form('forum_overview', $form_state);
+  $output = drupal_render($form);
+
+//  $output = drupal_get_form('forum_overview');
+  
+  
+//dpm($form, 'forum_overview');
+
+
+
+  $debug = "<h2>Debug Forum manager > $nid</h2>";
+//  $debug .= '<h3>node</h3><pre>' . print_r($node, TRUE) . '</pre>';
+//  $debug .= '<h3>node2<h3><pre>' . print_r($node2, TRUE) . '</pre>';
+//  $debug .= '<h3>nat</h3><pre>' . print_r($nat, TRUE) . '</pre>';
+//  $debug .= '<h3>nat</h3><pre>' . print_r($nat_children, TRUE) . '</pre>';
+//  $debug .= '<h3>nat_children</h3><pre>' . print_r($nat_children, TRUE) . '</pre>';
+  $debug .= '<h3>form</h3><pre>' . print_r($form, TRUE) . '</pre>';
+
+
+  return $output . $debug;
+}
+
+/**
+ * Implementation of hook_validate().
+ * Here we recover the data from the POST because, for some reason to
+ * be investigated changing the depth impacted on $form_values but not POST
+ */
+function atrium_forum_tree_form_validate($form, &$form_state) {
+  // @TODO remove this hack
+  
+
+//dpm($form, 'atrium_forum_tree_form_validate > form');
+//  dpm($form_state, 'atrium_forum_tree_form_validate > form_state');
+}
+
+
+function atrium_forum_tree_form_submit($form, &$form_state) {
+//dpm($form, 'atrium_forum_tree_form_submit > form');
+//  dpm($form_state, 'atrium_forum_tree_form_submit > form_state');
+
+}
+
+
+
+function atrium_forum_tree_form(&$form_state,$node) {
+
+  // get children terms
+  // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
+  $nid = $node->nid;
+
+  // get group taxonomy from nat
+  $nat = array_shift(nat_get_terms($nid));
+  $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
+  $nat_terms = array($nat->tid => $nat);
+  if(count($nat_children)>0) {
+    foreach($nat_children as $nat_term) {
+      $nat_terms[$nat_term->tid] = $nat_term;
+    }
+  }
+//dpm($nat_terms, 'atrium_forum_tree_form > nat_terms');
+
+  // get taxonomy_overview_terms form (used by forum_overview BTW)
+  module_load_include('inc', 'taxonomy', 'taxonomy.admin');
+  $vocabulary = taxonomy_vocabulary_load($nat->vid);
+  $form = taxonomy_overview_terms($form_state, $vocabulary);
+//dpm($form, 'atrium_forum_tree_form >taxonomy_overview_terms');
+  // filter out not needed terms
+  foreach(element_children($form) as $key) {
+    if(isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
+      if(array_key_exists($tid, $nat_terms)) {
+        if($form[$key]['#term']['tid'] == $nat->tid) {
+          unset($form[$key]);
+        }
+        else {
+          $form[$key]['#term']['depth']--;
+//dpm( $form[$key], "atrium_forum_tree_form > $key");
+        }
+      }
+      else {
+        unset($form[$key]);
+      }
+    }
+  }
+
+  // Remove the alphabetical reset.
+  unset($form['reset_alphabetical']);
+
+  // Add container link
+  $path = "node/$nid/forum/add";
+  $item = menu_get_item($path);
+  if ($item && $item['access']) {
+    $type = 'forum';
+    $links = array(
+      $type => array(
+        'title' => $item['title'],
+        'href'  => $path,
+      )
+    );
+    $output  = '<div class="view-empty">';
+//    $output .= t('Please add your first @type to get started.', array('@type' => node_get_types('name', $type)));
+    $output .= "<div class='buttons'>". theme('links', $links) ."</div>";
+    $output .= '</div>';
+  }
+
+$form['container'] = array('#value' => $output);
+
+    /*
+    '#value' = l(t('Add Forum Section'), "admin/content/taxonomy/{$nat->vid}/add/term");
+  );
+*/
+  // The form needs to have submit and validate handlers set explicitly.
+  $form['#theme'] = 'taxonomy_overview_terms';
+  $form['submit']['#weight'] = 99;
+  $form['#submit'] = array('atrium_forum_tree_form_submit', 'taxonomy_overview_terms_submit');
+//  $form['#validate'] = array('taxonomy_overview_terms_validate');
+  $form['#validate'] = array('atrium_forum_tree_form_validate');
+
+  $form['debug'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => 'Debug',
+    'debugm' => array('#value' => '<h3>form</h3><pre>' . print_r($form, true) . '</pre>'),
+    'debug2' => array('#value' => '<h3>node</h3><pre>' . print_r($node, true) . '</pre>'),
+  );
+
+
+  return $form;
+
+}
+
+
+function atrium_forum_add_form(&$form_state, $node) {
+
+  // get children terms
+  // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
+  $nid = $node->nid;
+
+  // get group taxonomy from nat
+  $nat = array_shift(nat_get_terms($nid));
+  $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
+  $nat_terms = array($nat->tid => $nat);
+  if(count($nat_children)>0) {
+    foreach($nat_children as $nat_term) {
+      $nat_terms[$nat_term->tid] = $nat_term;
+    }
+  }
+
+  // load taxonomy term form
+  module_load_include('inc', 'taxonomy', 'taxonomy.admin');
+  $vocabulary = taxonomy_vocabulary_load($nat->vid);
+  $form = taxonomy_form_term($form_state, $vocabulary);
+
+  // set parent
+  $form['parent'] = array('#type' => 'value', '#value' => $nat->tid);
+  unset($form['advanced']);
+
+  // add form handlers
+  $form['#validate'] = array('taxonomy_form_term_validate');
+  $form['#submit'] = array('taxonomy_form_term_submit');
+
+  $form['destination']['#value'] = "node/{$nat->vid}/forum";
+
+//dpm($form, "atrium_forum_add_form (nid $nid, vid {$nat->vid} > form");
+  return $form;
+
+}
+
 /**
  * Implementation of hook_menu().
- *
+ */
 function atrium_forum_menu() {
   $items = array();
-  $items['forum'] = array(
-    'title' => 'Forum',
-    'page callback' => 'atrium_forum_overview',
-    'page arguments' => array(),
+  $items['node/%node/forum'] = array(
+    'title' => 'Forum Organizer',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('atrium_forum_tree_form', 1),
     'access callback' => 'spaces_access_feature',
     'access arguments' => array('view', 'atrium_folders'),
-    'type' => MENU_NORMAL_ITEM,
-    'menu_name' => 'forum',
-//    'file' => 'atrium_folders.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['node/%node/forum/add'] = array(
+    'title' => 'Add Forum',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('atrium_forum_add_form', 1),
+    'access callback' => 'spaces_access_feature',
+    'access arguments' => array('view', 'atrium_folders'),
+    'type' => MENU_LOCAL_TASK,
   );
   return $items;
 }
@@ -87,11 +281,12 @@ function atrium_forum_db_rewrite_sql($query, $primary_table, $primary_field, $ar
 }
 
 /**
- * Implements hoo_menu_alter().
+ * Implements hook_menu_alter().
  */
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
-//dpm($items['forum'], 'atrium_forum_menu_later');
+//dpm($items['forum'], 'atrium_forum_menu_alter > forum');
+//dpm($items['notebook'], 'atrium_forum_menu_alter > notebook');
 }
 
 /**
@@ -119,6 +314,7 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
         $nat_terms[$nat_term->tid] = $nat_term;
       }
     }
+
     // remove taxonomy options (keep only nat term and children)
     foreach($form['taxonomy'][$nat->vid]['#options'] as $key => $val) {
       if( isset($val->option) && ($tid = key($val->option))) {

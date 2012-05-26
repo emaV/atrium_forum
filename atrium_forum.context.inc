@@ -43,9 +43,6 @@ function atrium_forum_context_default_contexts() {
         ),
       ),
     ),
-    'debug' => array(
-      'debug' => 1,
-    ),
     'menu' => 'forum',
   );
   $context->condition_mode = 0;

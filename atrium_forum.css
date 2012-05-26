@@ -11,3 +11,29 @@ div.fileview a.forum {
   background: url("images/forum.png") no-repeat center;
 }
 
+
+/*td.forum { background: #F8F8F8; }*/
+td.forum .indent { border-left: 24px solid #F8F8F8; padding-left: 1px }
+td.forum .indent .indent { border-color: #EEE; }
+td.forum .indent .indent .indent { border-color: #E8E8E8; }
+td.forum .indent .indent .indent .indent { border-color: #DDD; }
+/*
+td.forum .indent { margin-left: 1.5em; }
+td.forum { background: #F8F8F8; }
+td.forum .indent { background: #F4F4F4; }
+td.forum .indent .indent { background: #EEE; }
+td.forum .indent .indent .indent { background: #E8E8E8; }
+td.forum .indent .indent .indent .indent { background: #DDD; }
+
+td.forum { background: #F8F8F8; }
+td.forum .indent { background: #EEE; }
+td.forum .indent .indent { background: #E8E8E8; }
+td.forum .indent .indent .indent { background: #DDD; }
+td.forum .indent .indent .indent .indent { background: #D8D8D8; }
+*/
+
+
+td.forum { padding: 0; }
+td.forum .name {  padding: 5px; }
+td.forum .description {  padding: 0 5px 5px 5px; }
+

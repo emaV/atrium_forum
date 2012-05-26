@@ -338,13 +338,7 @@ function atrium_forum_list_block() {
   $nat_terms = array($nat->tid => $nat);
 
   if(count($nat_children)>0) {
- /*
-    $nat_menu = array();
-    foreach($nat_children as $nat_term) {
-      $nat_terms[$nat_term->tid] = $nat_term;
-      $nat_menu[current($nat_term->parents)][$nat_term->tid] = $nat_term->tid;
-    }
-*/
+
     $nat_flat[$nat->tid] = array(
       'link' => array(
         'title' => $nat->name,
@@ -354,7 +348,6 @@ function atrium_forum_list_block() {
       'has_children' => TRUE,
     );
     foreach($nat_children as $term) {
-
       if(!isset($nat_flat[$term->tid])) {
         $nat_flat[$term->tid] = array(
           'link' => array(
@@ -367,17 +360,13 @@ function atrium_forum_list_block() {
       $parent = current($term->parents);
       $nat_flat[$parent]['below'][$term->tid] =& $nat_flat[$term->tid];
       $nat_flat[$parent]['link']['expanded'] = $nat_flat[$parent]['link']['has_children'] = TRUE;
-//dpm(array('term' => $term,'nat_flat' =>  $nat_flat, 'nat_tree' =>  $nat_tree), "TERM  $term->name ({$term->tid})");
     }
     $nat_tree = array(
       $nat->tid => $nat_flat[$nat->tid],
     );
+    $block['subject'] = 'Forum list';
+    $block['content'] = menu_tree_output($nat_tree);
   }
-
-//dpm($nat_tree, '$nat_tree');
-
-  $block['subject'] = 'Forum list';
-  $block['content'] = menu_tree_output($nat_tree);
 /*
   $block['content']  .= '<hr /><h4>nat</h4><pre>' . print_r($nat, TRUE) . '</pre><hr />';
   $block['content']  .= '<hr /><h4>nat_menu</h4><pre>' . print_r($nat_menu, TRUE) . '</pre><hr />';
@@ -388,8 +377,6 @@ function atrium_forum_list_block() {
   return $block;
 }
 
-
-
 /**
  * Implementation of hook_block().
  */
@@ -397,7 +384,7 @@ function atrium_forum_block($op = 'list', $delta = 0) {
   switch ($op) {
     case 'list':
       return array(
-        'atrium_forum_list' => array('info' => t('Forum List'), 'cache' => BLOCK_CACHE_PER_PAGE),
+        'atrium_forum_list' => array('info' => t('Forum List'), 'cache' => BLOCK_NO_CACHE),
       );
     case 'configure':
       return array();

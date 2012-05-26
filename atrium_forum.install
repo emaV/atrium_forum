@@ -25,6 +25,6 @@ function atrium_forum_enable() {
   drupal_get_schema(NULL, TRUE).
   _nat_sync_associations(array("group|$forum_nav_vocabulary" => "group|$forum_nav_vocabulary"));
 
-  drupal_set_message("Atrium Forum feature enabled");
+  drupal_set_message("Atrium Forum feature enabled.");
 }
 

@@ -61,68 +61,19 @@ function atrium_forum_page($tid = 0) {
   return $output;
 }
 
-/*
-function atrium_forum_tree_form
-
-drupal_retrieve_form
-*/
-function atrium_forum_editor($node) {
-
-  // load node
-  // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
-  $nid = $node->nid;
-
-  // get group taxonomy from nat
-  $nat = array_shift(nat_get_terms($nid));
-
-  // get children terms
-  $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
-
-
-  module_load_include('inc', 'forum', 'forum.admin');
-
-  $form = drupal_retrieve_form('forum_overview', $form_state);
-  $output = drupal_render($form);
-
-//  $output = drupal_get_form('forum_overview');
-  
-  
-//dpm($form, 'forum_overview');
-
-
-
-  $debug = "<h2>Debug Forum manager > $nid</h2>";
-//  $debug .= '<h3>node</h3><pre>' . print_r($node, TRUE) . '</pre>';
-//  $debug .= '<h3>node2<h3><pre>' . print_r($node2, TRUE) . '</pre>';
-//  $debug .= '<h3>nat</h3><pre>' . print_r($nat, TRUE) . '</pre>';
-//  $debug .= '<h3>nat</h3><pre>' . print_r($nat_children, TRUE) . '</pre>';
-//  $debug .= '<h3>nat_children</h3><pre>' . print_r($nat_children, TRUE) . '</pre>';
-  $debug .= '<h3>form</h3><pre>' . print_r($form, TRUE) . '</pre>';
-
-
-  return $output . $debug;
-}
-
 /**
  * Implementation of hook_validate().
- * Here we recover the data from the POST because, for some reason to
- * be investigated changing the depth impacted on $form_values but not POST
  */
 function atrium_forum_tree_form_validate($form, &$form_state) {
   // @TODO remove this hack
-  
-
 //dpm($form, 'atrium_forum_tree_form_validate > form');
 //  dpm($form_state, 'atrium_forum_tree_form_validate > form_state');
 }
 
-
 function atrium_forum_tree_form_submit($form, &$form_state) {
 //dpm($form, 'atrium_forum_tree_form_submit > form');
 //  dpm($form_state, 'atrium_forum_tree_form_submit > form_state');
-
 }
-
 
 
 function atrium_forum_tree_form(&$form_state,$node) {
@@ -133,40 +84,50 @@ function atrium_forum_tree_form(&$form_state,$node) {
 
   // get group taxonomy from nat
   $nat = array_shift(nat_get_terms($nid));
+  $vocabulary = taxonomy_vocabulary_load($nat->vid);
   $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
   $nat_terms = array($nat->tid => $nat);
+  drupal_set_title(t('Forum container in %vocabulary', array('%vocabulary' => $vocabulary->name)));
+
+  // check for children
   if(count($nat_children)>0) {
     foreach($nat_children as $nat_term) {
       $nat_terms[$nat_term->tid] = $nat_term;
     }
-  }
 //dpm($nat_terms, 'atrium_forum_tree_form > nat_terms');
 
-  // get taxonomy_overview_terms form (used by forum_overview BTW)
-  module_load_include('inc', 'taxonomy', 'taxonomy.admin');
-  $vocabulary = taxonomy_vocabulary_load($nat->vid);
-  $form = taxonomy_overview_terms($form_state, $vocabulary);
+    // get taxonomy_overview_terms form (used by forum_overview BTW)
+    module_load_include('inc', 'taxonomy', 'taxonomy.admin');
+    $form = taxonomy_overview_terms($form_state, $vocabulary);
 //dpm($form, 'atrium_forum_tree_form >taxonomy_overview_terms');
-  // filter out not needed terms
-  foreach(element_children($form) as $key) {
-    if(isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
-      if(array_key_exists($tid, $nat_terms)) {
-        if($form[$key]['#term']['tid'] == $nat->tid) {
-          unset($form[$key]);
+    // filter out not needed terms
+    foreach(element_children($form) as $key) {
+      if(isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
+        if(array_key_exists($tid, $nat_terms)) {
+          if($form[$key]['#term']['tid'] == $nat->tid) {
+            unset($form[$key]);
+          }
+          else {
+            $form[$key]['#term']['depth']--;
+  //dpm( $form[$key], "atrium_forum_tree_form > $key");
+          }
         }
         else {
-          $form[$key]['#term']['depth']--;
-//dpm( $form[$key], "atrium_forum_tree_form > $key");
+          unset($form[$key]);
         }
       }
-      else {
-        unset($form[$key]);
-      }
     }
-  }
 
-  // Remove the alphabetical reset.
-  unset($form['reset_alphabetical']);
+    // Remove the alphabetical reset.
+    unset($form['reset_alphabetical']);
+
+    // The form needs to have submit and validate handlers set explicitly.
+    $form['#theme'] = 'taxonomy_overview_terms';
+    $form['submit']['#weight'] = 99;
+    $form['#submit'] = array('atrium_forum_tree_form_submit', 'taxonomy_overview_terms_submit');
+  //  $form['#validate'] = array('taxonomy_overview_terms_validate');
+    $form['#validate'] = array('atrium_forum_tree_form_validate');
+  }
 
   // Add container link
   $path = "node/$nid/forum/add";
@@ -180,23 +141,17 @@ function atrium_forum_tree_form(&$form_state,$node) {
       )
     );
     $output  = '<div class="view-empty">';
-//    $output .= t('Please add your first @type to get started.', array('@type' => node_get_types('name', $type)));
+    if(count($nat_children)>0) {
+      $output .= t('Add a Forum Container.');
+    }
+    else {
+      $output .= t('Please add your first Forum Container to get started.');
+    }
     $output .= "<div class='buttons'>". theme('links', $links) ."</div>";
     $output .= '</div>';
   }
+  $form['container'] = array('#value' => $output);
 
-$form['container'] = array('#value' => $output);
-
-    /*
-    '#value' = l(t('Add Forum Section'), "admin/content/taxonomy/{$nat->vid}/add/term");
-  );
-*/
-  // The form needs to have submit and validate handlers set explicitly.
-  $form['#theme'] = 'taxonomy_overview_terms';
-  $form['submit']['#weight'] = 99;
-  $form['#submit'] = array('atrium_forum_tree_form_submit', 'taxonomy_overview_terms_submit');
-//  $form['#validate'] = array('taxonomy_overview_terms_validate');
-  $form['#validate'] = array('atrium_forum_tree_form_validate');
 
   $form['debug'] = array(
     '#type' => 'fieldset',
@@ -206,7 +161,6 @@ $form['container'] = array('#value' => $output);
     'debugm' => array('#value' => '<h3>form</h3><pre>' . print_r($form, true) . '</pre>'),
     'debug2' => array('#value' => '<h3>node</h3><pre>' . print_r($node, true) . '</pre>'),
   );
-
 
   return $form;
 
@@ -233,6 +187,7 @@ function atrium_forum_add_form(&$form_state, $node) {
   module_load_include('inc', 'taxonomy', 'taxonomy.admin');
   $vocabulary = taxonomy_vocabulary_load($nat->vid);
   $form = taxonomy_form_term($form_state, $vocabulary);
+  drupal_set_title(t('Add Forum Container in %forum', array('%forum' => $nat->name)));
 
   // set parent
   $form['parent'] = array('#type' => 'value', '#value' => $nat->tid);
@@ -243,8 +198,8 @@ function atrium_forum_add_form(&$form_state, $node) {
   $form['#submit'] = array('taxonomy_form_term_submit');
 
   $form['destination']['#value'] = "node/{$nat->vid}/forum";
+  $form['identification']['name']['#title'] = t('Forum Container');
 
-//dpm($form, "atrium_forum_add_form (nid $nid, vid {$nat->vid} > form");
   return $form;
 
 }
@@ -255,7 +210,7 @@ function atrium_forum_add_form(&$form_state, $node) {
 function atrium_forum_menu() {
   $items = array();
   $items['node/%node/forum'] = array(
-    'title' => 'Forum Organizer',
+    'title' => 'Forum',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_tree_form', 1),
     'access callback' => 'spaces_access_feature',
@@ -263,21 +218,16 @@ function atrium_forum_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   $items['node/%node/forum/add'] = array(
-    'title' => 'Add Forum',
+    'title' => 'Add Forum Container',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_add_form', 1),
     'access callback' => 'spaces_access_feature',
     'access arguments' => array('view', 'atrium_folders'),
-    'type' => MENU_LOCAL_TASK,
+    'weight' => 99,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+//    'type' => MENU_LOCAL_TASK,
   );
   return $items;
-}
-
-/**
- * Implements hook_form_alter().
- */
-function atrium_forum_db_rewrite_sql($query, $primary_table, $primary_field, $args) {
-//  dpm(array($query, $primary_table, $primary_field, $args), 'atrium_forum_db_rewrite_sql');
 }
 
 /**
@@ -285,12 +235,49 @@ function atrium_forum_db_rewrite_sql($query, $primary_table, $primary_field, $ar
  */
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
+/*
+//  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK; 
+  foreach($items as $key => $item) {
+    if(substr($key, 0, 3) === 'for') {
+      dpm($item, "atrium_forum_menu_alter > $key");
+    }
+  }
+*/
 //dpm($items['forum'], 'atrium_forum_menu_alter > forum');
 //dpm($items['notebook'], 'atrium_forum_menu_alter > notebook');
 }
 
 /**
+ * Implementation of hook_atrium_admin_links_alter().
+ * - override forum overview template;
+ */
+function atrium_forum_atrium_admin_links_alter(&$links, $space) {
+  global $user;
+  if(spaces_access_admin()) {
+    $links['settings'] = array('title' => "Forum" , 'href' => "node/{$space->id}/forum");
+  }
+}
+
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ * - simulate hook_preprocess for theme('username')
+ * - insert an hook_preprocess_block function _before_ proper theming
+ */
+function atrium_forum_theme_registry_alter(&$theme_registry) {
+
+  // Get atrium_username module path.
+  $atrium_forum_path = drupal_get_path('module', 'atrium_forum');
+  array_unshift($theme_registry['forums']['theme paths'], $atrium_forum_path);
+  // @TODO remove lines below (for some reason drupal is not considering 'theme paths')
+  $theme_registry['forums']['theme path'] = $atrium_forum_path;
+  $theme_registry['forums']['template'] = $atrium_forum_path . '/forums';
+
+}
+
+/**
  * Implements hook_form_alter().
+ * - modify forum_node_form
  */
 function atrium_forum_form_alter(&$form, $form_state, $form_id) {
 
@@ -331,4 +318,111 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
 
 }
 
+
+/**
+ * Block atrium_forum_list callback.
+ */
+function atrium_forum_list_block() {
+  //get the group node from group context
+  $node = og_get_group_context();
+
+  // get children terms
+  // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
+  $nid = $node->nid;
+
+  // get group taxonomy from nat
+  $nat = array_shift(nat_get_terms($nid));
+
+  // get children terms
+  $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
+  $nat_terms = array($nat->tid => $nat);
+
+  if(count($nat_children)>0) {
+ /*
+    $nat_menu = array();
+    foreach($nat_children as $nat_term) {
+      $nat_terms[$nat_term->tid] = $nat_term;
+      $nat_menu[current($nat_term->parents)][$nat_term->tid] = $nat_term->tid;
+    }
+*/
+    $nat_flat[$nat->tid] = array(
+      'link' => array(
+        'title' => $nat->name,
+        'href'  => "forum/" . $nat->tid,
+      ),
+      'expanded' => TRUE,
+      'has_children' => TRUE,
+    );
+    foreach($nat_children as $term) {
+
+      if(!isset($nat_flat[$term->tid])) {
+        $nat_flat[$term->tid] = array(
+          'link' => array(
+            'title' => $term->name,
+            'href'  => "forum/" . $term->tid,
+            'expanded' => TRUE,
+          ),
+        );
+      }
+      $parent = current($term->parents);
+      $nat_flat[$parent]['below'][$term->tid] =& $nat_flat[$term->tid];
+      $nat_flat[$parent]['link']['expanded'] = $nat_flat[$parent]['link']['has_children'] = TRUE;
+//dpm(array('term' => $term,'nat_flat' =>  $nat_flat, 'nat_tree' =>  $nat_tree), "TERM  $term->name ({$term->tid})");
+    }
+    $nat_tree = array(
+      $nat->tid => $nat_flat[$nat->tid],
+    );
+  }
+
+//dpm($nat_tree, '$nat_tree');
+
+  $block['subject'] = 'Forum list';
+  $block['content'] = menu_tree_output($nat_tree);
+/*
+  $block['content']  .= '<hr /><h4>nat</h4><pre>' . print_r($nat, TRUE) . '</pre><hr />';
+  $block['content']  .= '<hr /><h4>nat_menu</h4><pre>' . print_r($nat_menu, TRUE) . '</pre><hr />';
+  $block['content']  .= '<hr /><h4>nat_tree</h4><pre>' . print_r($nat_tree, TRUE) . '</pre><hr />';
+  $block['content']  .= '<hr /><h4>nat_terms</h4><pre>' . print_r($nat_terms, TRUE) . '</pre><hr />';
+  $block['content']  .= '<hr /><h4>nat_children</h4><pre>' . print_r($nat_children, TRUE) . '</pre><hr />';
+*/
+  return $block;
+}
+
+
+
+/**
+ * Implementation of hook_block().
+ */
+function atrium_forum_block($op = 'list', $delta = 0) {
+  switch ($op) {
+    case 'list':
+      return array(
+        'atrium_forum_list' => array('info' => t('Forum List'), 'cache' => BLOCK_CACHE_PER_PAGE),
+      );
+    case 'configure':
+      return array();
+    case 'save':
+      return;
+    case 'view':
+      $block = array();
+      switch ($delta) {
+        case 'atrium_forum_list':
+          $block = atrium_forum_list_block();
+/*
+          $space = spaces_get_space();
+          if ($space->type == 'og') {
+            $block['subject'] = t('Welcome to !group', array('!group' => $space->group->title));
+            if (!empty($space->group->body)) {
+              $block['content'] = check_markup($space->group->body, $space->group->format);
+            }
+            else {
+              $block['content'] = $space->group->og_description;
+            }
+          }
+*/
+          break;
+      }
+      return $block;
+  }
+}
 

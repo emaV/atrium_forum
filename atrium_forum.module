@@ -339,6 +339,8 @@ function atrium_forum_list_block() {
 
   if(count($nat_children)>0) {
 
+    // get tree from flat array
+    // http://stackoverflow.com/a/2916150
     $nat_flat[$nat->tid] = array(
       'link' => array(
         'title' => $nat->name,

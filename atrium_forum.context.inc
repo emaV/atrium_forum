@@ -13,6 +13,11 @@ function atrium_forum_context_default_contexts() {
   $context->description = 'Atrium Forum';
   $context->tag = 'Forum';
   $context->conditions = array(
+    'menu' => array(
+      'values' => array(
+        'forum' => 'forum',
+      ),
+    ),
     'node' => array(
       'values' => array(
         'forum' => 'forum',
@@ -21,8 +26,28 @@ function atrium_forum_context_default_contexts() {
         'node_form' => '1',
       ),
     ),
+    'path' => array(
+      'values' => array(
+        'forum/*' => 'forum/*',
+      ),
+    ),
   );
-  $context->reactions = array();
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'atrium_forum-atrium_forum_list' => array(
+          'module' => 'atrium_forum',
+          'delta' => 'atrium_forum_list',
+          'region' => 'right',
+          'weight' => 0,
+        ),
+      ),
+    ),
+    'debug' => array(
+      'debug' => 1,
+    ),
+    'menu' => 'forum',
+  );
   $context->condition_mode = 0;
 
   // Translatables

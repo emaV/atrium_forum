@@ -332,7 +332,9 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
     $default_tid = array_key_exists($arg_tid, $nat_terms) ? $arg_tid : $nat->tid;
     $form['taxonomy'][$nat->vid]['#default_value'] = array($default_tid);
   }
-
+  elseif($form_id == 'taxonomy_form_term') {
+    $form['identification']['name']['#title'] = t('Forum Container');
+  }
 }
 
 

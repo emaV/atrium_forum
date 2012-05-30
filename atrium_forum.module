@@ -15,12 +15,12 @@ function atrium_forum_page($tid = 0) {
   if (!is_numeric($tid)) {
     return MENU_NOT_FOUND;
   }
-  elseif($tid == 0) {
+  elseif ($tid == 0) {
     //get the group node from group context
     $node = og_get_group_context();
     // get group taxonomy from nat
     $nat = array_shift($node->nat);
-    if(isset($nat->tid)) {
+    if (isset($nat->tid)) {
        $tid = $nat->tid;
     }
   }
@@ -34,7 +34,7 @@ function atrium_forum_page($tid = 0) {
     $topics = forum_get_topics($tid, $sortby, $forum_per_page);
   }
 
-  if(empty($topics)) {
+  if (empty($topics)) {
     $path = "node/add/forum" . (($tid>0) ? "/{$tid}" : '');
     $item = menu_get_item($path);
     if ($item && $item['access']) {
@@ -75,8 +75,10 @@ function atrium_forum_tree_form_submit($form, &$form_state) {
 //  dpm($form_state, 'atrium_forum_tree_form_submit > form_state');
 }
 
-
-function atrium_forum_tree_form(&$form_state,$node) {
+/**
+ * Forum container admin form.
+ */
+function atrium_forum_tree_form(&$form_state, $node) {
 
   // get children terms
   // @TODO why "auto loader" (%node) in hook_menu fails to load NAT data?
@@ -90,8 +92,8 @@ function atrium_forum_tree_form(&$form_state,$node) {
   drupal_set_title(t('Forum container in %vocabulary', array('%vocabulary' => $vocabulary->name)));
 
   // check for children
-  if(count($nat_children)>0) {
-    foreach($nat_children as $nat_term) {
+  if (count($nat_children)>0) {
+    foreach ($nat_children as $nat_term) {
       $nat_terms[$nat_term->tid] = $nat_term;
     }
 //dpm($nat_terms, 'atrium_forum_tree_form > nat_terms');
@@ -101,10 +103,10 @@ function atrium_forum_tree_form(&$form_state,$node) {
     $form = taxonomy_overview_terms($form_state, $vocabulary);
 //dpm($form, 'atrium_forum_tree_form >taxonomy_overview_terms');
     // filter out not needed terms
-    foreach(element_children($form) as $key) {
-      if(isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
-        if(array_key_exists($tid, $nat_terms)) {
-          if($form[$key]['#term']['tid'] == $nat->tid) {
+    foreach (element_children($form) as $key) {
+      if (isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
+        if (array_key_exists($tid, $nat_terms)) {
+          if ($form[$key]['#term']['tid'] == $nat->tid) {
             unset($form[$key]);
           }
           else {
@@ -141,7 +143,7 @@ function atrium_forum_tree_form(&$form_state,$node) {
       )
     );
     $output  = '<div class="view-empty">';
-    if(count($nat_children)>0) {
+    if (count($nat_children)>0) {
       $output .= t('Add a Forum Container.');
     }
     else {
@@ -158,8 +160,8 @@ function atrium_forum_tree_form(&$form_state,$node) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#title' => 'Debug',
-    'debugm' => array('#value' => '<h3>form</h3><pre>' . print_r($form, true) . '</pre>'),
-    'debug2' => array('#value' => '<h3>node</h3><pre>' . print_r($node, true) . '</pre>'),
+    'debugm' => array('#value' => '<h3>form</h3><pre>' . print_r($form, TRUE) . '</pre>'),
+    'debug2' => array('#value' => '<h3>node</h3><pre>' . print_r($node, TRUE) . '</pre>'),
   );
 
   return $form;
@@ -177,8 +179,8 @@ function atrium_forum_add_form(&$form_state, $node) {
   $nat = array_shift(nat_get_terms($nid));
   $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
   $nat_terms = array($nat->tid => $nat);
-  if(count($nat_children)>0) {
-    foreach($nat_children as $nat_term) {
+  if (count($nat_children)>0) {
+    foreach ($nat_children as $nat_term) {
       $nat_terms[$nat_term->tid] = $nat_term;
     }
   }
@@ -212,7 +214,7 @@ function atrium_forum_access_forum_admin() {
   //get the group node from group context
   $node = og_get_group_context();
 
-  if($node->type == 'group') {
+  if ($node->type == 'group') {
     $access = og_is_group_admin($node) || user_access('administer features') || spaces_access_admin();
     return $access;
    }
@@ -256,7 +258,7 @@ function atrium_forum_menu_alter(&$items) {
 //  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK;
 /*
   foreach($items as $key => $item) {
-    if( ($p = strpos($key, 'forum')) && ($p >= 0)) {
+    if ( ($p = strpos($key, 'forum')) && ($p >= 0)) {
       dpm($item, "atrium_forum_menu_alter > $key");
     }
   }
@@ -271,7 +273,7 @@ dpm($items['forum'], 'atrium_forum_menu_alter > forum');
  */
 function atrium_forum_atrium_admin_links_alter(&$links, $space) {
   global $user;
-  if(atrium_forum_access_forum_admin()) {
+  if (atrium_forum_access_forum_admin()) {
     $links['settings'] = array('title' => "Forum" , 'href' => "node/{$space->id}/forum");
   }
 }
@@ -313,16 +315,16 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
     // get children terms
     $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
     $nat_terms = array($nat->tid => $nat);
-    if(count($nat_children)>0) {
+    if (count($nat_children)>0) {
       foreach($nat_children as $nat_term) {
         $nat_terms[$nat_term->tid] = $nat_term;
       }
     }
 
     // remove taxonomy options (keep only nat term and children)
-    foreach($form['taxonomy'][$nat->vid]['#options'] as $key => $val) {
-      if( isset($val->option) && ($tid = key($val->option))) {
-        if(($tid != $nat->tid) && !array_key_exists($tid, $nat_terms)) {
+    foreach ($form['taxonomy'][$nat->vid]['#options'] as $key => $val) {
+      if (isset($val->option) && ($tid = key($val->option))) {
+        if (($tid != $nat->tid) && !array_key_exists($tid, $nat_terms)) {
           unset($form['taxonomy'][$nat->vid]['#options'][$key]);
         }
       }
@@ -332,7 +334,7 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
     $default_tid = array_key_exists($arg_tid, $nat_terms) ? $arg_tid : $nat->tid;
     $form['taxonomy'][$nat->vid]['#default_value'] = array($default_tid);
   }
-  elseif($form_id == 'taxonomy_form_term') {
+  elseif ($form_id == 'taxonomy_form_term') {
     $form['identification']['name']['#title'] = t('Forum Container');
   }
 }
@@ -356,7 +358,7 @@ function atrium_forum_list_block() {
   $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
   $nat_terms = array($nat->tid => $nat);
 
-  if(count($nat_children)>0) {
+  if (count($nat_children)>0) {
 
     // get tree from flat array
     // http://stackoverflow.com/a/2916150
@@ -368,8 +370,8 @@ function atrium_forum_list_block() {
       'expanded' => TRUE,
       'has_children' => TRUE,
     );
-    foreach($nat_children as $term) {
-      if(!isset($nat_flat[$term->tid])) {
+    foreach ($nat_children as $term) {
+      if (!isset($nat_flat[$term->tid])) {
         $nat_flat[$term->tid] = array(
           'link' => array(
             'title' => $term->name,
@@ -438,9 +440,9 @@ function atrium_forum_block($op = 'list', $delta = 0) {
  * Implements hook_preprocess_node().
  */
 function atrium_forum_preprocess_node($vars) {
-  if($vars['node']->type == 'forum') {
+  if ($vars['node']->type == 'forum') {
     $vars['body'] = $vars['content'];
-    if(!empty($vars['terms'])) {
+    if (!empty($vars['terms'])) {
       $label = t('Forum');
       $terms = "<div class='field terms clear-block'><span class='field-label-inline-first'>{$label}:</span> {$vars['terms']}</div>";
       $vars['content'] =  $terms . $vars['content'];

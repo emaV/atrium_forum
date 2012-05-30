@@ -6,7 +6,7 @@
 function atrium_forum_enable() {
 
   // set atrium_forum defaults
-  $forum_nav_vocabulary = variable_get('forum_nav_vocabulary',0);
+  $forum_nav_vocabulary = variable_get('forum_nav_vocabulary', 0);
   $nat_atrium_forum_default = array(
     'types'  => array('group' => array($forum_nav_vocabulary => $forum_nav_vocabulary)),
     'delete' => array('group' => 1),
@@ -22,7 +22,7 @@ function atrium_forum_enable() {
   // @TODO check this code
   $associations = array("group|$forum_nav_vocabulary" => "group|$forum_nav_vocabulary");
   module_load_include('inc', 'nat', 'nat.admin');
-  drupal_get_schema(NULL, TRUE).
+  drupal_get_schema(NULL, TRUE);
   _nat_sync_associations(array("group|$forum_nav_vocabulary" => "group|$forum_nav_vocabulary"));
 
   drupal_set_message("Atrium Forum feature enabled.");

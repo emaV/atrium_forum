@@ -316,7 +316,7 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
     $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
     $nat_terms = array($nat->tid => $nat);
     if (count($nat_children)>0) {
-      foreach($nat_children as $nat_term) {
+      foreach ($nat_children as $nat_term) {
         $nat_terms[$nat_term->tid] = $nat_term;
       }
     }

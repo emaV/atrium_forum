@@ -8,7 +8,7 @@ atrium_forum subdirectory under sites/all/modules/features in your
 Open Atrium installation, then enable the feature from the Features
 administration panel and activate it on a per-group basis.
 
-If the site is not empty (i.e. you have already groups) please
+If the site is not empty (i.e. you have already groups) hook_install will
 run a NAT Sync operation: this will create NAT associations (and terms)
 for group nodes not present in the NAT table.
 

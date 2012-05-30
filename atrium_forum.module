@@ -253,7 +253,8 @@ function atrium_forum_menu() {
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
 
-//  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK; 
+//  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK;
+/*
   foreach($items as $key => $item) {
     if( ($p = strpos($key, 'forum')) && ($p >= 0)) {
       dpm($item, "atrium_forum_menu_alter > $key");
@@ -262,6 +263,7 @@ function atrium_forum_menu_alter(&$items) {
 
 dpm($items['forum'], 'atrium_forum_menu_alter > forum');
 //dpm($items['notebook'], 'atrium_forum_menu_alter > notebook');
+*/
 }
 
 /**
@@ -428,5 +430,12 @@ function atrium_forum_block($op = 'list', $delta = 0) {
       }
       return $block;
   }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function atrium_forum_preprocess_node($vars) {
+dpm($vars, "atrium_forum_preprocess_node");
 }
 

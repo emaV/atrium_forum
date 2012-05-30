@@ -436,6 +436,15 @@ function atrium_forum_block($op = 'list', $delta = 0) {
  * Implements hook_preprocess_node().
  */
 function atrium_forum_preprocess_node($vars) {
-dpm($vars, "atrium_forum_preprocess_node");
+  if($vars['node']->type == 'forum') {
+    $vars['body'] = $vars['content'];
+    if(!empty($vars['terms'])) {
+      $label = t('Forum');
+      $terms = "<div class='field terms clear-block'><span class='field-label-inline-first'>{$label}:</span> {$vars['terms']}</div>";
+      $vars['content'] =  $terms . $vars['content'];
+      unset($vars['terms']);
+    }
+  }
 }
+
 

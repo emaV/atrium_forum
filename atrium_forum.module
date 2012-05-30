@@ -205,6 +205,23 @@ function atrium_forum_add_form(&$form_state, $node) {
 }
 
 /**
+ * Access callback
+ */
+function atrium_forum_access_forum_admin() {
+
+  //get the group node from group context
+  $node = og_get_group_context();
+
+  if($node->type == 'group') {
+    $access = og_is_group_admin($node) || user_access('administer features') || spaces_access_admin();
+    return $access;
+   }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Implementation of hook_menu().
  */
 function atrium_forum_menu() {
@@ -213,16 +230,16 @@ function atrium_forum_menu() {
     'title' => 'Forum',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_tree_form', 1),
-    'access callback' => 'spaces_access_feature',
-    'access arguments' => array('view', 'atrium_folders'),
+    'access callback' => 'atrium_forum_access_forum_admin',
+//    'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
   $items['node/%node/forum/add'] = array(
     'title' => 'Add Forum Container',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_add_form', 1),
-    'access callback' => 'spaces_access_feature',
-    'access arguments' => array('view', 'atrium_folders'),
+    'access callback' => 'atrium_forum_access_forum_admin',
+//    'access arguments' => array(1),
     'weight' => 99,
     'type' => MENU_DEFAULT_LOCAL_TASK,
 //    'type' => MENU_LOCAL_TASK,
@@ -235,25 +252,24 @@ function atrium_forum_menu() {
  */
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
-/*
+
 //  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK; 
   foreach($items as $key => $item) {
-    if(substr($key, 0, 3) === 'for') {
+    if( ($p = strpos($key, 'forum')) && ($p >= 0)) {
       dpm($item, "atrium_forum_menu_alter > $key");
     }
   }
-*/
-//dpm($items['forum'], 'atrium_forum_menu_alter > forum');
+
+dpm($items['forum'], 'atrium_forum_menu_alter > forum');
 //dpm($items['notebook'], 'atrium_forum_menu_alter > notebook');
 }
 
 /**
  * Implementation of hook_atrium_admin_links_alter().
- * - override forum overview template;
  */
 function atrium_forum_atrium_admin_links_alter(&$links, $space) {
   global $user;
-  if(spaces_access_admin()) {
+  if(atrium_forum_access_forum_admin()) {
     $links['settings'] = array('title' => "Forum" , 'href' => "node/{$space->id}/forum");
   }
 }
@@ -261,8 +277,7 @@ function atrium_forum_atrium_admin_links_alter(&$links, $space) {
 
 /**
  * Implementation of hook_theme_registry_alter().
- * - simulate hook_preprocess for theme('username')
- * - insert an hook_preprocess_block function _before_ proper theming
+ * - override forum overview template;
  */
 function atrium_forum_theme_registry_alter(&$theme_registry) {
 

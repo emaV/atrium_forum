@@ -274,7 +274,7 @@ dpm($items['forum'], 'atrium_forum_menu_alter > forum');
 function atrium_forum_atrium_admin_links_alter(&$links, $space) {
   global $user;
   if (atrium_forum_access_forum_admin()) {
-    $links['settings'] = array('title' => "Forum" , 'href' => "node/{$space->id}/forum");
+    $links['forum-settings'] = array('title' => "Forum" , 'href' => "node/{$space->id}/forum");
   }
 }
 

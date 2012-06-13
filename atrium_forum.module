@@ -9,6 +9,9 @@ function atrium_forum_init() {
   drupal_add_css(drupal_get_path('module', 'atrium_forum') .'/atrium_forum.css');
 }
 
+/**
+ * Forum page callback
+ */
 function atrium_forum_page($tid = 0) {
 
   // get tid from group context/path
@@ -62,20 +65,6 @@ function atrium_forum_page($tid = 0) {
 }
 
 /**
- * Implementation of hook_validate().
- */
-function atrium_forum_tree_form_validate($form, &$form_state) {
-  // @TODO remove this hack
-//dpm($form, 'atrium_forum_tree_form_validate > form');
-//  dpm($form_state, 'atrium_forum_tree_form_validate > form_state');
-}
-
-function atrium_forum_tree_form_submit($form, &$form_state) {
-//dpm($form, 'atrium_forum_tree_form_submit > form');
-//  dpm($form_state, 'atrium_forum_tree_form_submit > form_state');
-}
-
-/**
  * Forum container admin form.
  */
 function atrium_forum_tree_form(&$form_state, $node) {
@@ -96,12 +85,11 @@ function atrium_forum_tree_form(&$form_state, $node) {
     foreach ($nat_children as $nat_term) {
       $nat_terms[$nat_term->tid] = $nat_term;
     }
-//dpm($nat_terms, 'atrium_forum_tree_form > nat_terms');
 
     // get taxonomy_overview_terms form (used by forum_overview BTW)
     module_load_include('inc', 'taxonomy', 'taxonomy.admin');
     $form = taxonomy_overview_terms($form_state, $vocabulary);
-//dpm($form, 'atrium_forum_tree_form >taxonomy_overview_terms');
+
     // filter out not needed terms
     foreach (element_children($form) as $key) {
       if (isset($form[$key]['#term']) && $tid = $form[$key]['#term']['tid']) {
@@ -111,7 +99,6 @@ function atrium_forum_tree_form(&$form_state, $node) {
           }
           else {
             $form[$key]['#term']['depth']--;
-  //dpm( $form[$key], "atrium_forum_tree_form > $key");
           }
         }
         else {
@@ -127,7 +114,6 @@ function atrium_forum_tree_form(&$form_state, $node) {
     $form['#theme'] = 'taxonomy_overview_terms';
     $form['submit']['#weight'] = 99;
     $form['#submit'] = array('atrium_forum_tree_form_submit', 'taxonomy_overview_terms_submit');
-  //  $form['#validate'] = array('taxonomy_overview_terms_validate');
     $form['#validate'] = array('atrium_forum_tree_form_validate');
   }
 
@@ -209,11 +195,7 @@ function atrium_forum_add_form(&$form_state, $node) {
 /**
  * Access callback
  */
-function atrium_forum_access_forum_admin() {
-
-  //get the group node from group context
-  $node = og_get_group_context();
-
+function atrium_forum_access_forum_admin($node) {
   if ($node->type == 'group') {
     $access = og_is_group_admin($node) || user_access('administer features') || spaces_access_admin();
     return $access;
@@ -233,7 +215,7 @@ function atrium_forum_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_tree_form', 1),
     'access callback' => 'atrium_forum_access_forum_admin',
-//    'access arguments' => array(1),
+    'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
   );
   $items['node/%node/forum/add'] = array(
@@ -241,10 +223,9 @@ function atrium_forum_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('atrium_forum_add_form', 1),
     'access callback' => 'atrium_forum_access_forum_admin',
-//    'access arguments' => array(1),
+    'access arguments' => array(1),
     'weight' => 99,
     'type' => MENU_DEFAULT_LOCAL_TASK,
-//    'type' => MENU_LOCAL_TASK,
   );
   return $items;
 }
@@ -254,18 +235,6 @@ function atrium_forum_menu() {
  */
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
-
-//  $items['forum']['type'] = MENU_DEFAULT_LOCAL_TASK;
-/*
-  foreach($items as $key => $item) {
-    if ( ($p = strpos($key, 'forum')) && ($p >= 0)) {
-      dpm($item, "atrium_forum_menu_alter > $key");
-    }
-  }
-
-dpm($items['forum'], 'atrium_forum_menu_alter > forum');
-//dpm($items['notebook'], 'atrium_forum_menu_alter > notebook');
-*/
 }
 
 /**
@@ -278,20 +247,17 @@ function atrium_forum_atrium_admin_links_alter(&$links, $space) {
   }
 }
 
-
 /**
  * Implementation of hook_theme_registry_alter().
  * - override forum overview template;
  */
 function atrium_forum_theme_registry_alter(&$theme_registry) {
-
   // Get atrium_username module path.
   $atrium_forum_path = drupal_get_path('module', 'atrium_forum');
   array_unshift($theme_registry['forums']['theme paths'], $atrium_forum_path);
   // @TODO remove lines below (for some reason drupal is not considering 'theme paths')
   $theme_registry['forums']['theme path'] = $atrium_forum_path;
   $theme_registry['forums']['template'] = $atrium_forum_path . '/forums';
-
 }
 
 /**
@@ -338,7 +304,6 @@ function atrium_forum_form_alter(&$form, $form_state, $form_id) {
     $form['identification']['name']['#title'] = t('Forum Container');
   }
 }
-
 
 /**
  * Block atrium_forum_list callback.
@@ -390,13 +355,6 @@ function atrium_forum_list_block() {
     $block['subject'] = 'Forum list';
     $block['content'] = menu_tree_output($nat_tree);
   }
-/*
-  $block['content']  .= '<hr /><h4>nat</h4><pre>' . print_r($nat, TRUE) . '</pre><hr />';
-  $block['content']  .= '<hr /><h4>nat_menu</h4><pre>' . print_r($nat_menu, TRUE) . '</pre><hr />';
-  $block['content']  .= '<hr /><h4>nat_tree</h4><pre>' . print_r($nat_tree, TRUE) . '</pre><hr />';
-  $block['content']  .= '<hr /><h4>nat_terms</h4><pre>' . print_r($nat_terms, TRUE) . '</pre><hr />';
-  $block['content']  .= '<hr /><h4>nat_children</h4><pre>' . print_r($nat_children, TRUE) . '</pre><hr />';
-*/
   return $block;
 }
 
@@ -418,18 +376,6 @@ function atrium_forum_block($op = 'list', $delta = 0) {
       switch ($delta) {
         case 'atrium_forum_list':
           $block = atrium_forum_list_block();
-/*
-          $space = spaces_get_space();
-          if ($space->type == 'og') {
-            $block['subject'] = t('Welcome to !group', array('!group' => $space->group->title));
-            if (!empty($space->group->body)) {
-              $block['content'] = check_markup($space->group->body, $space->group->format);
-            }
-            else {
-              $block['content'] = $space->group->og_description;
-            }
-          }
-*/
           break;
       }
       return $block;
@@ -437,7 +383,7 @@ function atrium_forum_block($op = 'list', $delta = 0) {
 }
 
 /**
- * Implements hook_preprocess_node().
+ * Implementation of hook_preprocess_node().
  */
 function atrium_forum_preprocess_node($vars) {
   if ($vars['node']->type == 'forum') {
@@ -450,5 +396,4 @@ function atrium_forum_preprocess_node($vars) {
     }
   }
 }
-
 

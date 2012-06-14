@@ -235,6 +235,8 @@ function atrium_forum_menu() {
  */
 function atrium_forum_menu_alter(&$items) {
   $items['forum']['page callback'] = 'atrium_forum_page';
+  $items['forum']['access callback'] = 'spaces_access_feature';
+  $items['forum']['access arguments'] = array('view', 'atrium_forum');
 }
 
 /**

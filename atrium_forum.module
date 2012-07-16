@@ -393,7 +393,7 @@ function atrium_forum_preprocess_node($vars) {
     $vars['body'] = $vars['content'];
     if (!empty($vars['terms'])) {
       $label = t('Forum');
-      $terms = "<div class='field terms clear-block'><span class='field-label-inline-first'>{$label}:</span> {$vars['terms']}</div>";
+      $terms = '<div class="field terms clear-block"><span class="field-label-inline-first">' . $label . ':</span> ' . $vars['terms'] . '</div>';
       $vars['content'] =  $terms . $vars['content'];
       unset($vars['terms']);
     }

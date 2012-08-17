@@ -1,8 +1,8 @@
-span.spaces-feature.feature-atrium_forum,
 #features-menu li a.icon-forum span.icon {
   background: url("images/forum.png") no-repeat scroll 0 0 transparent;
 }
 
+span.spaces-feature.feature-atrium_forum,
 span.spaces-feature.node-forum {
   background: url("images/forum.png");
   background-position: 0px 100%;

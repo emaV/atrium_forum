@@ -28,3 +28,9 @@ function atrium_forum_enable() {
   drupal_set_message("Atrium Forum feature enabled.");
 }
 
+/**
+ * Implementation of hook_disable().
+ */
+function atrium_forum_disable() {
+  module_disable(array('forum'));
+}

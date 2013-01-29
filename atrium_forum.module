@@ -36,31 +36,8 @@ function atrium_forum_page($tid = 0) {
   if ($tid && !in_array($tid, variable_get('forum_containers', array()))) {
     $topics = forum_get_topics($tid, $sortby, $forum_per_page);
   }
+  $output = theme('forums', $forums, $topics, $parents, $tid, $sortby, $forum_per_page);
 
-  if (empty($topics)) {
-    $path = "node/add/forum" . (($tid>0) ? "/{$tid}" : '');
-    $item = menu_get_item($path);
-    if ($item && $item['access']) {
-      $type = 'forum';
-      $links = array(
-        $type => array(
-          'title' => $item['title'],
-          'href'  => $path,
-        )
-      );
-      $output  = '<div class="view-empty">';
-      $output .= t('Please add your first @type to get started.', array('@type' => node_get_types('name', $type)));
-      $output .= "<div class='buttons'>". theme('links', $links) ."</div>";
-      $output .= '</div>';
-    }
-  }
-  else {
-    $parents = taxonomy_get_parents_all($tid);
-    if ($tid && !in_array($tid, variable_get('forum_containers', array()))) {
-      $topics = forum_get_topics($tid, $sortby, $forum_per_page);
-    }
-    $output = theme('forums', $forums, $topics, $parents, $tid, $sortby, $forum_per_page);
-  }
   return $output;
 }
 
@@ -139,16 +116,6 @@ function atrium_forum_tree_form(&$form_state, $node) {
     $output .= '</div>';
   }
   $form['container'] = array('#value' => $output);
-
-
-  $form['debug'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => 'Debug',
-    'debugm' => array('#value' => '<h3>form</h3><pre>' . print_r($form, TRUE) . '</pre>'),
-    'debug2' => array('#value' => '<h3>node</h3><pre>' . print_r($node, TRUE) . '</pre>'),
-  );
 
   return $form;
 
@@ -326,38 +293,36 @@ function atrium_forum_list_block() {
   $nat_children = taxonomy_get_tree($nat->vid, $nat->tid);
   $nat_terms = array($nat->tid => $nat);
 
-  if (count($nat_children)>0) {
-
-    // get tree from flat array
-    // http://stackoverflow.com/a/2916150
-    $nat_flat[$nat->tid] = array(
-      'link' => array(
-        'title' => $nat->name,
-        'href'  => "forum/" . $nat->tid,
-      ),
-      'expanded' => TRUE,
-      'has_children' => TRUE,
-    );
-    foreach ($nat_children as $term) {
-      if (!isset($nat_flat[$term->tid])) {
-        $nat_flat[$term->tid] = array(
-          'link' => array(
-            'title' => $term->name,
-            'href'  => "forum/" . $term->tid,
-            'expanded' => TRUE,
-          ),
-        );
-      }
-      $parent = current($term->parents);
-      $nat_flat[$parent]['below'][$term->tid] =& $nat_flat[$term->tid];
-      $nat_flat[$parent]['link']['expanded'] = $nat_flat[$parent]['link']['has_children'] = TRUE;
+  // get tree from flat array
+  // http://stackoverflow.com/a/2916150
+  $nat_flat[$nat->tid] = array(
+    'link' => array(
+      'title' => $nat->name,
+      'href'  => "forum/" . $nat->tid,
+    ),
+    'expanded' => TRUE,
+    'has_children' => TRUE,
+  );
+  foreach ($nat_children as $term) {
+    if (!isset($nat_flat[$term->tid])) {
+      $nat_flat[$term->tid] = array(
+        'link' => array(
+          'title' => $term->name,
+          'href'  => "forum/" . $term->tid,
+          'expanded' => TRUE,
+        ),
+      );
     }
-    $nat_tree = array(
-      $nat->tid => $nat_flat[$nat->tid],
-    );
-    $block['subject'] = 'Forum list';
-    $block['content'] = menu_tree_output($nat_tree);
+    $parent = current($term->parents);
+    $nat_flat[$parent]['below'][$term->tid] =& $nat_flat[$term->tid];
+    $nat_flat[$parent]['link']['expanded'] = $nat_flat[$parent]['link']['has_children'] = TRUE;
   }
+  $nat_tree = array(
+    $nat->tid => $nat_flat[$nat->tid],
+  );
+  $block['subject'] = 'Forum list';
+  $block['content'] = menu_tree_output($nat_tree);
+
   return $block;
 }
 

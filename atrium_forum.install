@@ -33,4 +33,5 @@ function atrium_forum_enable() {
  */
 function atrium_forum_disable() {
   module_disable(array('forum'));
+  drupal_set_message("Atrium Forum feature disabled.");
 }
